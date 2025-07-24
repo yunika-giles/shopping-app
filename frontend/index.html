@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Kubeshop</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f4f4f4; }
+    header { background: #222; color: #fff; padding: 1rem; text-align: center; }
+    .container { padding: 2rem; display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; }
+    .product, .cart-item { background: #fff; padding: 1rem; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); width: 250px; }
+    .product img { max-width: 100%; border-radius: 4px; }
+    button { background: #007bff; color: white; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; }
+    button:hover { background: #0056b3; }
+    .cart { margin-top: 2rem; background: #fff; padding: 1rem; border-radius: 8px; max-width: 800px; margin: 2rem auto; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Kubeshop - Tech Products</h1>
+  </header>
+
+  <div class="container" id="product-list"></div>
+
+  <div class="cart">
+    <h2>Your Cart</h2>
+    <div id="cart-items"></div>
+    <p><strong>Total:</strong> $<span id="total">0.00</span></p>
+    <button onclick="checkout()">Checkout</button>
+  </div>
+
+  <script>
+    const apiBase = "http://<YOUR_BACKEND_SERVICE>:5000"; // Replace with backend service DNS or URL
+    const cart = {};
+
+    async function fetchProducts() {
+      const res = await fetch(`${apiBase}/products`);
+      const products = await res.json();
+      const container = document.getElementById('product-list');
+      container.innerHTML = '';
+      products.forEach(product => {
+        const div = document.createElement('div');
+        div.className = 'product';
+        div.innerHTML = `
+          <img src="${product.image || 'https://via.placeholder.com/200'}" alt="${product.name}">
+          <h3>${product.name}</h3>
+          <p>${product.description}</p>
+          <p><strong>$${product.price.toFixed(2)}</strong></p>
+          <button onclick="addToCart('${product.id}', '${product.name}', ${product.price})">Add to Cart</button>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function addToCart(id, name, price) {
+      if (!cart[id]) {
+        cart[id] = { name, price, quantity: 1 };
+      } else {
+        cart[id].quantity++;
+      }
+      renderCart();
+    }
+
+    function renderCart() {
+      const cartContainer = document.getElementById('cart-items');
+      cartContainer.innerHTML = '';
+      let total = 0;
+      for (let id in cart) {
+        const item = cart[id];
+        total += item.price * item.quantity;
+        cartContainer.innerHTML += `
+          <div class="cart-item">
+            ${item.name} x ${item.quantity} - $${(item.price * item.quantity).toFixed(2)}
+            <button onclick="removeFromCart('${id}')">Remove</button>
+          </div>
+        `;
+      }
+      document.getElementById('total').textContent = total.toFixed(2);
+    }
+
+    function removeFromCart(id) {
+      delete cart[id];
+      renderCart();
+    }
+
+    function checkout() {
+      alert('Checkout successful! (simulation)');
+      // Here you can POST to /checkout in the backend
+    }
+
+    fetchProducts();
+  </script>
+</body>
+</html>
